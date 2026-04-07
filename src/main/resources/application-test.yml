@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bifriends_test
+    username: bifriends
+    password: bifriends
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false

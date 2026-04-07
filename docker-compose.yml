@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: bifriends-be
+    ports:
+      - "18080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: bifriends
+      DB_USERNAME: bifriends
+      DB_PASSWORD: bifriends
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    container_name: bifriends-db
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_DB: bifriends
+      POSTGRES_USER: bifriends
+      POSTGRES_PASSWORD: bifriends
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bifriends"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
