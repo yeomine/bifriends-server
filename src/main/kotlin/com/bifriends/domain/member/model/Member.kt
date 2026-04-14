@@ -29,6 +29,24 @@ class Member(
     @Column(nullable = false)
     val role: Role = Role.ROLE_USER,
 
+    @Column
+    var nickname: String? = null,
+
+    @Column
+    var grade: Int,
+
+    @Column
+    var guardianPhone: String,
+
+    @Column(nullable = false)
+    var notificationEnabled: Boolean = false,
+
+    @Column(nullable = false)
+    var microphoneEnabled: Boolean = false,
+
+    @Column(nullable = false)
+    var onboardingCompleted: Boolean = false,
+
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

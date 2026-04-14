@@ -40,6 +40,7 @@ class SecurityConfig(
                 auth
                     .requestMatchers("/health", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers("/api/v1/onboarding/**").authenticated()
                     .anyRequest().authenticated()
             }
             .oauth2Login { oauth2 ->
@@ -78,7 +79,8 @@ class SecurityConfig(
                 "refreshToken" to refreshToken,
                 "email" to member.email,
                 "name" to member.name,
-                "profileImageUrl" to member.profileImageUrl
+                "profileImageUrl" to member.profileImageUrl,
+                "onboardingCompleted" to member.onboardingCompleted
             )
 
             response.contentType = "application/json;charset=UTF-8"
