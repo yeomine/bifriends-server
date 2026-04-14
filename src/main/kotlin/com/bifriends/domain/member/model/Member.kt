@@ -33,10 +33,10 @@ class Member(
     var nickname: String? = null,
 
     @Column
-    var grade: Int,
+    var grade: Int? = null,
 
     @Column
-    var guardianPhone: String,
+    var guardianPhone: String? = null,
 
     @Column(nullable = false)
     var notificationEnabled: Boolean = false,
