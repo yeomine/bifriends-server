@@ -1,6 +1,6 @@
-# BiFriends Backend
+# BIFriends Server (Playground)
 
-Spring Boot 기반 백엔드 API 서버.
+Client의 개발을 위한 임시 Server입니다.
 
 ## 기술 스택
 
