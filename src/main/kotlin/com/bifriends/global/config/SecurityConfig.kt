@@ -51,6 +51,13 @@ class SecurityConfig(
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
                     .successHandler(oAuth2AuthenticationSuccessHandler())
             }
+            .exceptionHandling { exceptions ->
+                exceptions.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpServletResponse.SC_UNAUTHORIZED
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write("""{"error":"Unauthorized"}""")
+                }
+            }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
