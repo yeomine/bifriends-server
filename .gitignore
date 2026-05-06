@@ -42,4 +42,4 @@ Thumbs.db
 
 bifriends-5df72-firebase-adminsdk-fbsvc-67276a83cd.json
 
-src/main/resources/firebase-service-account.json
+src/main/resources/firebase-service-account.jsonsrc/main/resources/*.json

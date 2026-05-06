@@ -1,6 +1,7 @@
 package com.bifriends.global.config
 
 import com.bifriends.domain.member.service.CustomOAuth2UserService
+import com.bifriends.infrastructure.security.JwtAuthenticationFilter
 import com.bifriends.infrastructure.security.JwtProvider
 import com.bifriends.infrastructure.security.PrincipalDetails
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -14,13 +15,15 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val jwtProvider: JwtProvider,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
 
     /**
@@ -38,7 +41,7 @@ class SecurityConfig(
             .httpBasic { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/health", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
+                    .requestMatchers("/health", "/error", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/v1/onboarding/**").authenticated()
                     .anyRequest().authenticated()
@@ -48,6 +51,7 @@ class SecurityConfig(
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
                     .successHandler(oAuth2AuthenticationSuccessHandler())
             }
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
