@@ -61,6 +61,10 @@ class OnboardingService(
             MemberItem(member = member, itemType = request.itemType)
         )
 
+        if (member.representativeItemType == null) {
+            member.representativeItemType = item.itemType
+        }
+
         return GiftResponse(itemType = item.itemType, acquiredAt = item.acquiredAt.toString())
     }
 
