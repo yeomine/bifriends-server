@@ -3,6 +3,7 @@ package com.bifriends.infrastructure.security
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.Date
@@ -19,6 +20,8 @@ class JwtProvider(
     @Value("\${jwt.access-token-expiration}") private val accessTokenExpiration: Long,
     @Value("\${jwt.refresh-token-expiration}") private val refreshTokenExpiration: Long
 ) {
+
+    private val log = LoggerFactory.getLogger(JwtProvider::class.java)
 
     private val key: SecretKey by lazy {
         Keys.hmacShaKeyFor(secret.toByteArray())
@@ -51,6 +54,7 @@ class JwtProvider(
             getClaims(token)
             true
         } catch (e: Exception) {
+            log.warn("JWT validation failed: [{}] {}", e.javaClass.simpleName, e.message)
             false
         }
     }

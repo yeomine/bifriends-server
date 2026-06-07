@@ -2,10 +2,13 @@ package com.bifriends.infrastructure.ai
 
 import com.bifriends.infrastructure.ai.dto.AiEmotionScenarioRequest
 import com.bifriends.infrastructure.ai.dto.AiEmotionScenarioResponse
+import com.bifriends.infrastructure.ai.dto.AiScenarioJobAccepted
+import com.bifriends.infrastructure.ai.dto.AiScenarioStatusResponse
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
-
 /**
  * BE → AI 감정 학습 시나리오 생성 클라이언트 (EMO-04)
  *
@@ -20,6 +23,7 @@ import org.springframework.web.client.RestClient
 class AiEmotionScenarioClient(
     private val restClient: RestClient,
     private val properties: AiServiceProperties,
+    private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -43,12 +47,48 @@ class AiEmotionScenarioClient(
             request.memberId, request.emotion
         )
 
-        return restClient.post()
+        log.info("[AiEmotionScenarioClient] 요청 JSON: {}", objectMapper.writeValueAsString(request))
+
+        val job = restClient.post()
             .uri(properties.emotionScenarioPath)
-            .postJson(request)
-            .retrieve()
-            .body(AiEmotionScenarioResponse::class.java)
-            ?: throw IllegalStateException("AI 감정 시나리오 응답이 비어 있습니다.")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange { _, response ->
+                objectMapper.readValue(
+                    response.body.readAllBytes(),
+                    AiScenarioJobAccepted::class.java
+                )
+            } ?: throw IllegalStateException("AI 시나리오 job 응답이 비어 있습니다.")
+
+        log.info("[AiEmotionScenarioClient] job 접수 (jobId={}, memberId={})", job.jobId, request.memberId)
+
+        return pollUntilDone(job.jobId, request.memberId)
+    }
+
+    private fun pollUntilDone(jobId: String, memberId: Long): AiEmotionScenarioResponse {
+        val statusUri = "${properties.emotionScenarioPath}/$jobId"
+        repeat(properties.pollingMaxAttempts) { attempt ->
+            Thread.sleep(properties.pollingIntervalMs)
+            val status = restClient.get()
+                .uri(statusUri)
+                .exchange { _, response ->
+                    objectMapper.readValue(
+                        response.body.readAllBytes(),
+                        AiScenarioStatusResponse::class.java
+                    )
+                } ?: return@repeat
+
+            log.debug("[AiEmotionScenarioClient] 폴링 #{} — jobId={}, status={}", attempt + 1, jobId, status.status)
+
+            when (status.status) {
+                "done"  -> return status.result
+                    ?: throw IllegalStateException("AI 시나리오 결과가 비어 있습니다. jobId=$jobId")
+                "error" -> throw IllegalStateException("AI 시나리오 생성 실패. jobId=$jobId")
+            }
+        }
+        throw IllegalStateException(
+            "AI 시나리오 생성 타임아웃 (${properties.pollingMaxAttempts}회 × ${properties.pollingIntervalMs}ms). jobId=$jobId, memberId=$memberId"
+        )
     }
 
     /**

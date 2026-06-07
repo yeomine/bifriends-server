@@ -46,6 +46,8 @@ jwt:
 firebase:
   config:
     path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
+  firestore:
+    database-id: ${FIREBASE_FIRESTORE_DATABASE_ID:bifriends}
   storage:
     bucket: ${FIREBASE_STORAGE_BUCKET:bifriends-5df72.firebasestorage.app}
   # 친구랑 탭 폴백 이미지 다운로드 토큰
@@ -103,9 +105,8 @@ ai:
   service:
     enabled: ${AI_SERVICE_ENABLED:false}
     base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8001}
-    chat-path: ${AI_CHAT_PATH:/v1/ai/chat}
-    base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8001}
-    chat-path: ${AI_CHAT_PATH:/v1/ai/chat}
+    chat-path: ${AI_CHAT_PATH:/api/v1/ai/chat}
     batch-weekly-safety-path: ${AI_BATCH_WEEKLY_SAFETY_PATH:/api/v1/ai/batch/weekly-safety}
     batch-weekly-report-path: ${AI_BATCH_WEEKLY_REPORT_PATH:/api/v1/ai/report/weekly}
+    parent-mission-path: ${AI_PARENT_MISSION_PATH:/api/v1/ai/parent-mission}
     emotion-scenario-path: ${AI_EMOTION_SCENARIO_PATH:/api/v1/ai/content/scenario}

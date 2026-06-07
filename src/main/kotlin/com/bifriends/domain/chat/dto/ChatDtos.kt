@@ -5,7 +5,9 @@ import com.bifriends.domain.chat.model.ChatSession
 import com.bifriends.domain.chat.model.MessageRole
 import com.bifriends.domain.chat.model.SessionStatus
 import com.bifriends.domain.onboarding.model.Interest
+import com.bifriends.infrastructure.ai.dto.AiTodoCreated
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -35,16 +37,10 @@ data class ChatMessageResponse(
     val sessionId: String,
     /** Leo의 텍스트 응답 */
     val reply: String?,
-    /**
-     * 앱 내 이동/액션 힌트 — AI 팀 구조 확정 전 JsonNode로 그대로 전달.
-     * 예) { "type": "NAVIGATE", "target": "MATH_STUDY", "stepId": 3 }
-     */
-    val cta: JsonNode? = null,
-    /**
-     * 이번 응답에서 Leo가 생성한 Todo ID 목록.
-     * FE는 이 값을 받으면 홈 화면 할 일 목록을 갱신한다.
-     */
-    val todosCreated: List<Long>? = null,
+    /** 앱 내 이동/액션 힌트. null이면 빈 객체 {} 반환 */
+    val cta: JsonNode? = JsonNodeFactory.instance.objectNode(),
+    /** Leo가 생성한 할 일 목록. null이면 빈 배열 [] 반환 */
+    val todosCreated: List<AiTodoCreated>? = emptyList(),
 )
 
 // ── Leo 내부 API — 세션 메시지 목록 (3.5) ──────────────────────────────────────

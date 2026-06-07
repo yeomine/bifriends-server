@@ -20,6 +20,18 @@ data class AiEmotionScenarioRequest(
     @JsonProperty("fallback_urls") val fallbackUrls: Map<String, Map<String, String>> = emptyMap(),
 )
 
+// ── 비동기 Job 응답 (폴링용) ────────────────────────────────────────────────
+
+data class AiScenarioJobAccepted(
+    @JsonProperty("job_id") val jobId: String,
+    val status: String,
+)
+
+data class AiScenarioStatusResponse(
+    val status: String,   // "pending" | "done" | "error"
+    val result: AiEmotionScenarioResponse? = null,
+)
+
 // ── AI → BE 응답 ──────────────────────────────────────────────────────────
 
 data class AiEmotionScenarioResponse(

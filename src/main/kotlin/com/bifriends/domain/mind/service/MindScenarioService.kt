@@ -6,10 +6,12 @@ import com.bifriends.domain.mind.dto.MindScenarioRequest
 import com.bifriends.domain.onboarding.repository.MemberInterestRepository
 import com.bifriends.infrastructure.ai.AiEmotionScenarioClient
 import com.bifriends.infrastructure.ai.dto.AiEmotionScenarioRequest
+import com.bifriends.infrastructure.ai.dto.AiEmotionScenarioResponse
 import com.bifriends.infrastructure.ai.dto.AiStep3
 import com.bifriends.infrastructure.firebase.FallbackImageUrlProvider
 import com.bifriends.infrastructure.firebase.FirebaseStorageService
 import com.bifriends.infrastructure.firebase.FirestoreService
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -31,6 +33,7 @@ class MindScenarioService(
     private val storageService: FirebaseStorageService,
     private val firestoreService: FirestoreService,
     private val fallbackImageUrlProvider: FallbackImageUrlProvider,
+    private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -60,12 +63,33 @@ class MindScenarioService(
         )
 
         val step3WithUrls = uploadStep3Images(aiResponse.steps.step3, aiResponse.setId)
+        val resolvedResponse = resolveNickname(aiResponse, nickname)
 
         log.info(
             "[MindScenario] 시나리오 생성 완료 — memberId={}, setId={}, isFallback={}",
-            memberId, aiResponse.setId, aiResponse.isFallback,
+            memberId, resolvedResponse.setId, resolvedResponse.isFallback,
         )
-        return EmotionScenarioResponse.from(aiResponse, step3WithUrls)
+        return EmotionScenarioResponse.from(resolvedResponse, step3WithUrls)
+    }
+
+    private fun resolveNickname(response: AiEmotionScenarioResponse, nickname: String): AiEmotionScenarioResponse {
+        val jongseong = hasJongseong(nickname)
+        val json = objectMapper.writeValueAsString(response)
+            .replace("{nickname}이는", if (jongseong) "${nickname}이는" else "${nickname}는")
+            .replace("{nickname}이가", if (jongseong) "${nickname}이가" else "${nickname}가")
+            .replace("{nickname}이를", if (jongseong) "${nickname}이를" else "${nickname}를")
+            .replace("{nickname}이야", if (jongseong) "${nickname}이야" else "${nickname}야")
+            .replace("{nickname}아",   if (jongseong) "${nickname}아"   else "${nickname}야")
+            .replace("{nickname}", nickname)
+        return objectMapper.readValue(json, AiEmotionScenarioResponse::class.java)
+    }
+
+    /** 마지막 글자에 종성(받침)이 있으면 true. 한글 음절이 아닌 경우 false. */
+    private fun hasJongseong(nickname: String): Boolean {
+        if (nickname.isEmpty()) return false
+        val code = nickname.last().code
+        if (code < 0xAC00 || code > 0xD7A3) return false
+        return (code - 0xAC00) % 28 != 0
     }
 
     private fun uploadStep3Images(step3: AiStep3, setId: String): AiStep3 {

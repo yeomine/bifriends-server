@@ -1,6 +1,7 @@
 package com.bifriends.domain.chat.service
 
 import com.bifriends.domain.chat.dto.*
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.bifriends.domain.chat.model.ChatMessage
 import com.bifriends.domain.chat.model.ChatSession
 import com.bifriends.domain.chat.model.MessageRole
@@ -9,6 +10,7 @@ import com.bifriends.domain.chat.repository.ChatSessionRepository
 import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.infrastructure.ai.AiChatClient
 import com.bifriends.infrastructure.ai.dto.AiChatRequest
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -21,6 +23,7 @@ class ChatService(
     private val chatMessageRepository: ChatMessageRepository,
     private val memberRepository: MemberRepository,
 ) {
+    private val log = LoggerFactory.getLogger(ChatService::class.java)
 
     /**
      * FE 메시지 전송 — 세션 자동 생성 + 메시지 저장 + AI 중계
@@ -61,6 +64,7 @@ class ChatService(
                 message = request.message,
             )
         )
+        log.info("AI 응답 — reply={}, cta={}, todosCreated={}", aiResponse.reply, aiResponse.cta, aiResponse.todosCreated)
 
         // 4. 어시스턴트 메시지 저장
         aiResponse.reply?.let {
@@ -77,8 +81,8 @@ class ChatService(
         return ChatMessageResponse(
             sessionId = request.sessionId,
             reply = aiResponse.reply,
-            cta = aiResponse.cta,
-            todosCreated = aiResponse.todosCreated,
+            cta = aiResponse.cta?.takeUnless { it.isNull } ?: JsonNodeFactory.instance.objectNode(),
+            todosCreated = aiResponse.todosCreated ?: emptyList(),
         )
     }
 
