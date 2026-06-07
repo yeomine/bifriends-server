@@ -1,6 +1,6 @@
-# BiFriends Backend
+# BiFriends Backend - Playground
 
-Spring Boot 기반 백엔드 API 서버.
+Spring Boot 기반 백엔드 API 서버. - 클라이언트 테스트용
 
 ## 기술 스택
 
