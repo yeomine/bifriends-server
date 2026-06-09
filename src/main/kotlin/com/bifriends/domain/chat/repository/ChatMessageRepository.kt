@@ -30,5 +30,6 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         @Param("to") to: LocalDateTime,
     ): List<ChatMessage>
 
+    fun deleteAllBySessionSessionKey(sessionKey: String)
     fun deleteAllByMemberId(memberId: Long)
 }

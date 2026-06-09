@@ -43,6 +43,30 @@ data class ChatMessageResponse(
     val todosCreated: List<AiTodoCreated>? = emptyList(),
 )
 
+// ── FE — 세션 목록 조회 ────────────────────────────────────────────────────────
+
+data class ChatSessionListResponse(
+    val sessions: List<ChatSessionItem>,
+)
+
+data class ChatSessionItem(
+    val sessionId: String,
+    val title: String?,
+    val status: SessionStatus,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime,
+) {
+    companion object {
+        fun from(session: ChatSession) = ChatSessionItem(
+            sessionId = session.sessionKey,
+            title = session.title,
+            status = session.status,
+            createdAt = session.createdAt,
+            updatedAt = session.updatedAt,
+        )
+    }
+}
+
 // ── Leo 내부 API — 세션 메시지 목록 (3.5) ──────────────────────────────────────
 
 data class ChatSessionMessagesResponse(

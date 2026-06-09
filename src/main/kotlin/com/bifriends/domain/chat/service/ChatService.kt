@@ -86,6 +86,23 @@ class ChatService(
         )
     }
 
+    // ── FE API ───────────────────────────────────────────────────────────────
+
+    /** 회원의 세션 목록 (최신 수정순) */
+    fun getSessions(memberId: Long): ChatSessionListResponse {
+        val sessions = chatSessionRepository.findAllByMemberIdOrderByUpdatedAtDesc(memberId)
+        return ChatSessionListResponse(sessions = sessions.map { ChatSessionItem.from(it) })
+    }
+
+    /** 세션 내 메시지 목록 — FE용 (소유권 검증 포함) */
+    fun getSessionMessagesForMember(memberId: Long, sessionKey: String): ChatSessionMessagesResponse {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw IllegalArgumentException("세션을 찾을 수 없습니다. sessionKey=$sessionKey")
+        check(session.member.id == memberId) { "본인의 세션만 조회할 수 있습니다." }
+        val messages = chatMessageRepository.findBySessionKeyOrderByCreatedAtAsc(sessionKey)
+        return ChatSessionMessagesResponse.from(session, messages)
+    }
+
     // ── Leo 내부 API ──────────────────────────────────────────────────────────
 
     /** 세션 내 메시지 전체 목록 (Leo 3.5) — sessionKey로 조회 */
@@ -110,6 +127,16 @@ class ChatService(
             to = to,
             messages = messages.map { ChatMessageWithSessionItem.from(it) },
         )
+    }
+
+    /** 세션 삭제 — 메시지 먼저 삭제 후 세션 삭제 (소유권 검증 포함) */
+    @Transactional
+    fun deleteSession(memberId: Long, sessionKey: String) {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw IllegalArgumentException("세션을 찾을 수 없습니다. sessionKey=$sessionKey")
+        check(session.member.id == memberId) { "본인의 세션만 삭제할 수 있습니다." }
+        chatMessageRepository.deleteAllBySessionSessionKey(sessionKey)
+        chatSessionRepository.delete(session)
     }
 
     /** 세션 제목·상태 수정 (Leo 3.9) */
