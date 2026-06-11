@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 interface LearningAttemptRepository : JpaRepository<LearningAttempt, Long> {
 
     /** 특정 문제의 현재 진행 중인 시도 조회 (upsert 패턴용) */
-    fun findByMemberIdAndStepIdAndCycleNumberAndQuestionIndex(
+    fun findFirstByMemberIdAndStepIdAndCycleNumberAndQuestionIndex(
         memberId: Long,
         stepId: Long,
         cycleNumber: Int,

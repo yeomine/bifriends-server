@@ -19,6 +19,12 @@ import java.time.LocalDateTime
     indexes = [
         Index(name = "idx_learning_attempt_member_subject", columnList = "member_id, subject, solved_at"),
         Index(name = "idx_learning_attempt_problem", columnList = "member_id, step_id, cycle_number, question_index"),
+    ],
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uq_learning_attempt_problem",
+            columnNames = ["member_id", "step_id", "cycle_number", "question_index"],
+        )
     ]
 )
 class LearningAttempt(

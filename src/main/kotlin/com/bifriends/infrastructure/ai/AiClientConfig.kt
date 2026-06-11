@@ -16,7 +16,7 @@ class AiClientConfig {
     fun aiRestClient(properties: AiServiceProperties): RestClient {
         val factory = SimpleClientHttpRequestFactory().apply {
             setConnectTimeout(10_000)
-            setReadTimeout(30_000)
+            setReadTimeout(properties.readTimeoutMs)
         }
         // AI 서버가 Content-Type: application/octet-stream으로 응답하는 경우에도 JSON 파싱
         val jsonConverter = MappingJackson2HttpMessageConverter().apply {

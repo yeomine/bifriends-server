@@ -2,6 +2,8 @@ package com.bifriends.domain.home.service
 
 import com.bifriends.domain.member.repository.MemberRepository
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -11,6 +13,8 @@ import java.time.ZoneId
  * 할 일 자동 생성 스케줄러
  *
  * 매일 00:00 KST에 전체 회원의 오늘 할 일 3개를 생성한다.
+ * 앱 시작 시에도 오늘 할 일이 누락된 회원을 보완 생성한다
+ * (자정 이후 서버 재시작으로 스케줄이 지나쳐진 경우 대비).
  *
  * ──────────────────────────────────────────────────────────────
  * MVP 한계 및 향후 개선 방안
@@ -30,6 +34,17 @@ class TodoScheduler(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
+     * 앱 시작 시 오늘 할 일 누락 보완
+     * 자정 이후 서버가 재시작되어 스케줄이 지나쳐진 경우를 커버한다.
+     */
+    @EventListener(ApplicationReadyEvent::class)
+    fun catchUpTodayTodos() {
+        val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
+        log.info("[TodoScheduler] 시작 시 누락 보완 — date=$today")
+        generateTodosForAllMembers(today, caller = "catchUp")
+    }
+
+    /**
      * 매일 00:00 KST 실행
      * cron = "초 분 시 일 월 요일"
      */
@@ -37,22 +52,24 @@ class TodoScheduler(
     fun generateDailyTodos() {
         val today = LocalDate.now(ZoneId.of("Asia/Seoul"))
         log.info("[TodoScheduler] 일일 할 일 생성 시작 — date=$today")
+        generateTodosForAllMembers(today, caller = "scheduler")
+    }
 
+    private fun generateTodosForAllMembers(today: LocalDate, caller: String) {
         val members = memberRepository.findAll()
         var successCount = 0
         var skipCount = 0
 
         members.forEach { member ->
             try {
-                // generateDailyTodos 내부에서 이미 생성됐으면 스킵 (멱등)
                 val beforeExists = todoService.isTodayTodoGenerated(member.id, today)
                 todoService.generateDailyTodos(member, today)
                 if (beforeExists) skipCount++ else successCount++
             } catch (e: Exception) {
-                log.error("[TodoScheduler] 할 일 생성 실패 — memberId=${member.id}", e)
+                log.error("[$caller] 할 일 생성 실패 — memberId=${member.id}", e)
             }
         }
 
-        log.info("[TodoScheduler] 완료 — 생성=$successCount, 스킵=$skipCount, 전체=${members.size}")
+        log.info("[$caller] 완료 — 생성=$successCount, 스킵=$skipCount, 전체=${members.size}")
     }
 }

@@ -18,4 +18,6 @@ data class AiServiceProperties(
     val pollingIntervalMs: Long = 2000,
     /** 폴링 최대 횟수 (초과 시 타임아웃) */
     val pollingMaxAttempts: Int = 60,
+    /** AI 서버 HTTP read timeout (ms) — Gemini 재시도 포함 시간 고려 */
+    val readTimeoutMs: Int = 120_000,
 )

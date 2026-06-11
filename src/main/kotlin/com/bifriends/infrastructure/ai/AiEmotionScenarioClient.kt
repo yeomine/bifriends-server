@@ -49,17 +49,21 @@ class AiEmotionScenarioClient(
 
         log.info("[AiEmotionScenarioClient] 요청 JSON: {}", objectMapper.writeValueAsString(request))
 
-        val job = restClient.post()
+        val responseNode = restClient.post()
             .uri(properties.emotionScenarioPath)
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange { _, response ->
-                objectMapper.readValue(
-                    response.body.readAllBytes(),
-                    AiScenarioJobAccepted::class.java
-                )
+                objectMapper.readTree(response.body.readAllBytes())
             } ?: throw IllegalStateException("AI 시나리오 job 응답이 비어 있습니다.")
 
+        // 폴백 시 AI가 시나리오를 즉시 반환 (job_id 없음)
+        if (!responseNode.has("job_id")) {
+            log.info("[AiEmotionScenarioClient] 즉시 응답 수신 (폴백) — memberId={}", request.memberId)
+            return objectMapper.treeToValue(responseNode, AiEmotionScenarioResponse::class.java)
+        }
+
+        val job = objectMapper.treeToValue(responseNode, AiScenarioJobAccepted::class.java)
         log.info("[AiEmotionScenarioClient] job 접수 (jobId={}, memberId={})", job.jobId, request.memberId)
 
         return pollUntilDone(job.jobId, request.memberId)

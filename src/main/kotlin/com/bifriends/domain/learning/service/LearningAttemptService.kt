@@ -34,7 +34,7 @@ class LearningAttemptService(
     ) {
         require(hintsUsed in 0..3) { "hintsUsed는 0~3 사이여야 합니다." }
 
-        val existing = learningAttemptRepository.findByMemberIdAndStepIdAndCycleNumberAndQuestionIndex(
+        val existing = learningAttemptRepository.findFirstByMemberIdAndStepIdAndCycleNumberAndQuestionIndex(
             memberId, stepId, cycleNumber, questionIndex,
         )
 
