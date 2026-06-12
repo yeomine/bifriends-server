@@ -163,23 +163,7 @@ VALUES
      v_day + TIME '09:00', v_day + TIME '20:00');
 END LOOP;
 
-    -- ── 학습 진도 ────────────────────────────────────────────────────────
-INSERT INTO user_math_progress (member_id, math_step_id, is_step_completed, last_accessed_at)
-VALUES (v_member_id, v_math_step1_id, FALSE, v_today - 2)
-    RETURNING id INTO v_math_progress1_id;
-
-INSERT INTO user_math_progress_cycles (progress_id, cycle_number) VALUES
-                                                                      (v_math_progress1_id, 1),
-                                                                      (v_math_progress1_id, 2),
-                                                                      (v_math_progress1_id, 3);
-
-INSERT INTO user_math_progress (member_id, math_step_id, is_step_completed, last_accessed_at)
-VALUES (v_member_id, v_math_step2_id, FALSE, v_today - 1)
-    RETURNING id INTO v_math_progress2_id;
-
-INSERT INTO user_math_progress_cycles (progress_id, cycle_number) VALUES
-    (v_math_progress2_id, 1);
-
+    -- ── 학습 진도 (수학: 미시작 상태) ───────────────────────────────────
 INSERT INTO user_korean_progress (member_id, korean_step_id, is_step_completed, last_accessed_at)
 VALUES (v_member_id, v_korean_step1_id, TRUE, v_today - 3)
     RETURNING id INTO v_korean_progress1_id;
@@ -199,31 +183,7 @@ INSERT INTO user_korean_progress_cycles (progress_id, cycle_number) VALUES
                                                                         (v_korean_progress2_id, 1),
                                                                         (v_korean_progress2_id, 2);
 
--- ── 문제 풀이 22건 (solved=true) ─────────────────────────────────────
-INSERT INTO learning_attempt (
-    member_id, subject, concept, step_id, cycle_number, question_index,
-    attempts, hints_used, solved, solved_at, created_at, updated_at
-)
-SELECT
-    v_member_id,
-    'MATH',
-    v_math_concept1,
-    v_math_step1_id,
-    gs.cycle_num,
-    gs.q_idx,
-    1 + (gs.n % 2),
-    gs.n % 3,
-        TRUE,
-        (v_today - (gs.n % 10)) + TIME '17:30',
-        (v_today - (gs.n % 10)) + TIME '17:00',
-        (v_today - (gs.n % 10)) + TIME '17:30'
-FROM (
-    SELECT n,
-    2 + ((n - 1) / 3) AS cycle_num,
-    (n - 1) % 3 AS q_idx
-    FROM generate_series(1, 12) AS n
-    ) gs;
-
+-- ── 문제 풀이 이력 (수학: 없음 / 국어만) ────────────────────────────
 INSERT INTO learning_attempt (
     member_id, subject, concept, step_id, cycle_number, question_index,
     attempts, hints_used, solved, solved_at, created_at, updated_at
